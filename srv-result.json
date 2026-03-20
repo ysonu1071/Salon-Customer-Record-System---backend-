@@ -1,0 +1,30 @@
+{
+  "addresses": [
+    {
+      "name": "ac-g9kypaz-shard-00-02.4slgzzv.mongodb.net",
+      "port": 27017,
+      "priority": 0,
+      "weight": 0,
+      "type": "SRV"
+    },
+    {
+      "name": "ac-g9kypaz-shard-00-00.4slgzzv.mongodb.net",
+      "port": 27017,
+      "priority": 0,
+      "weight": 0,
+      "type": "SRV"
+    },
+    {
+      "name": "ac-g9kypaz-shard-00-01.4slgzzv.mongodb.net",
+      "port": 27017,
+      "priority": 0,
+      "weight": 0,
+      "type": "SRV"
+    }
+  ],
+  "records": [
+    [
+      "authSource=admin&replicaSet=atlas-mlbcpe-shard-0"
+    ]
+  ]
+}
