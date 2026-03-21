@@ -158,6 +158,76 @@ const deleteCustomer = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Get customers due for reminders
+// @route   GET /api/customers/reminders
+// @access  Private
+const getReminders = asyncHandler(async (req, res) => {
+  const customers = await Customer.find({});
+  const now = new Date();
+
+  const followUps = [];
+  const missed = [];
+
+  customers.forEach(customer => {
+    if (!customer.lastVisit) return;
+    
+    const lastVisitDate = new Date(customer.lastVisit);
+    const diffDays = Math.floor((now - lastVisitDate) / (1000 * 60 * 60 * 24));
+    
+    // Logic for Follow-ups (1-2 days ago)
+    // Only if not contacted AFTER the last visit
+    const lastContactedDate = customer.lastContacted ? new Date(customer.lastContacted) : null;
+    const isContactedRecently = lastContactedDate && lastContactedDate > lastVisitDate;
+
+    if (diffDays >= 1 && diffDays <= 2 && !isContactedRecently) {
+      // Get the last service name for the message
+      const latestService = [...customer.servicesHistory].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      followUps.push({
+        _id: customer._id,
+        name: customer.name,
+        phone: customer.phone,
+        service: latestService ? latestService.service : 'service',
+        date: lastVisitDate,
+      });
+    }
+
+    // Logic for Missed Clients (30+ days ago)
+    if (diffDays >= 30 && !isContactedRecently) {
+      // Don't show in missed if already contacted for being "missed" in the last 7 days
+      const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+      const contactedInLastWeek = lastContactedDate && lastContactedDate > oneWeekAgo;
+
+      if (!contactedInLastWeek) {
+        missed.push({
+          _id: customer._id,
+          name: customer.name,
+          phone: customer.phone,
+          date: lastVisitDate,
+          daysAgo: diffDays
+        });
+      }
+    }
+  });
+
+  res.json({ followUps, missed });
+});
+
+// @desc    Update last contacted date
+// @route   PUT /api/customers/:id/contacted
+// @access  Private
+const updateLastContacted = asyncHandler(async (req, res) => {
+  const customer = await Customer.findById(req.params.id);
+
+  if (customer) {
+    customer.lastContacted = Date.now();
+    await customer.save();
+    res.json({ message: 'Last contacted updated' });
+  } else {
+    res.status(404);
+    throw new Error('Customer not found');
+  }
+});
+
 export {
   getCustomers,
   getCustomerById,
@@ -167,4 +237,6 @@ export {
   updateServiceHistory,
   deleteServiceHistory,
   deleteCustomer,
+  getReminders,
+  updateLastContacted,
 };
