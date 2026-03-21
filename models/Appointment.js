@@ -12,7 +12,10 @@ const appointmentSchema = mongoose.Schema(
     },
     service: {
       type: String,
-      required: true,
+    },
+    serviceType: {
+      type: String,
+      enum: ['Makeup', 'Service', 'Mehandi', 'Nail Extension'],
     },
     date: {
       type: Date,

@@ -5,12 +5,13 @@ import Appointment from '../models/Appointment.js';
 // @route   POST /api/appointments
 // @access  Private
 const createAppointment = asyncHandler(async (req, res) => {
-  const { customerId, customerName, service, date, time, phone } = req.body;
+  const { customerId, customerName, serviceType, service, date, time, phone } = req.body;
 
   const appointment = await Appointment.create({
     user: req.user._id,
     customerId,
     customerName,
+    serviceType,
     service,
     date,
     time,
