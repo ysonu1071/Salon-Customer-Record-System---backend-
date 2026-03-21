@@ -20,6 +20,9 @@ const customerSchema = mongoose.Schema(
     notes: {
       type: String,
     },
+    lastContacted: {
+      type: Date,
+    },
     servicesHistory: [
       {
         service: { type: String, required: true },

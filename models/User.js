@@ -21,6 +21,11 @@ const userSchema = mongoose.Schema(
       enum: ['superadmin', 'admin', 'staff'],
       default: 'admin',
     },
+    salonName: {
+      type: String,
+      required: true,
+      default: 'My Salon',
+    },
   },
   {
     timestamps: true,
@@ -33,9 +38,9 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // Encrypt password using bcrypt
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    next();
+    return;
   }
 
   const salt = await bcrypt.genSalt(10);
