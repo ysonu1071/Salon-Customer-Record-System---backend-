@@ -5,7 +5,7 @@ import Customer from '../models/Customer.js';
 // @route   GET /api/customers
 // @access  Private
 const getCustomers = asyncHandler(async (req, res) => {
-  const customers = await Customer.find({}).sort({ createdAt: -1 });
+  const customers = await Customer.find({ userId: req.user._id }).sort({ createdAt: -1 });
   res.json(customers);
 });
 
@@ -16,6 +16,11 @@ const getCustomerById = asyncHandler(async (req, res) => {
   const customer = await Customer.findById(req.params.id);
 
   if (customer) {
+    // Verify ownership
+    if (customer.userId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to access this customer');
+    }
     res.json(customer);
   } else {
     res.status(404);
@@ -30,6 +35,7 @@ const createCustomer = asyncHandler(async (req, res) => {
   const { name, phone, email, notes } = req.body;
 
   const customer = await Customer.create({
+    userId: req.user._id,
     name,
     phone,
     email,
@@ -48,6 +54,12 @@ const updateCustomer = asyncHandler(async (req, res) => {
   const customer = await Customer.findById(req.params.id);
 
   if (customer) {
+    // Verify ownership
+    if (customer.userId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to update this customer');
+    }
+    
     customer.name = name || customer.name;
     customer.phone = phone || customer.phone;
     customer.email = email || customer.email;
@@ -65,14 +77,22 @@ const updateCustomer = asyncHandler(async (req, res) => {
 // @route   POST /api/customers/:id/services
 // @access  Private
 const addServiceHistory = asyncHandler(async (req, res) => {
-  const { service, price, date } = req.body;
+  const { service, price, date, totalBill, amountPaid } = req.body;
 
   const customer = await Customer.findById(req.params.id);
 
   if (customer) {
+    // Verify ownership
+    if (customer.userId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to add service to this customer');
+    }
+    
     const newService = {
       service,
       price: Number(price),
+      totalBill: Number(totalBill || 0),
+      amountPaid: Number(amountPaid || 0),
       date: date ? new Date(date) : Date.now(),
       staff: req.user._id,
     };
@@ -92,11 +112,17 @@ const addServiceHistory = asyncHandler(async (req, res) => {
 // @route   PUT /api/customers/:id/services/:serviceId
 // @access  Private
 const updateServiceHistory = asyncHandler(async (req, res) => {
-  const { service, price, date } = req.body;
+  const { service, price, date, totalBill, amountPaid } = req.body;
 
   const customer = await Customer.findById(req.params.id);
 
   if (customer) {
+    // Verify ownership
+    if (customer.userId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to update service for this customer');
+    }
+    
     const serviceIndex = customer.servicesHistory.findIndex(
       (s) => s._id.toString() === req.params.serviceId
     );
@@ -104,6 +130,8 @@ const updateServiceHistory = asyncHandler(async (req, res) => {
     if (serviceIndex !== -1) {
       customer.servicesHistory[serviceIndex].service = service || customer.servicesHistory[serviceIndex].service;
       customer.servicesHistory[serviceIndex].price = price !== undefined ? Number(price) : customer.servicesHistory[serviceIndex].price;
+      customer.servicesHistory[serviceIndex].totalBill = totalBill !== undefined ? Number(totalBill) : customer.servicesHistory[serviceIndex].totalBill;
+      customer.servicesHistory[serviceIndex].amountPaid = amountPaid !== undefined ? Number(amountPaid) : customer.servicesHistory[serviceIndex].amountPaid;
       customer.servicesHistory[serviceIndex].date = date ? new Date(date) : customer.servicesHistory[serviceIndex].date;
 
       await customer.save();
@@ -125,6 +153,12 @@ const deleteServiceHistory = asyncHandler(async (req, res) => {
   const customer = await Customer.findById(req.params.id);
 
   if (customer) {
+    // Verify ownership
+    if (customer.userId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to delete service for this customer');
+    }
+    
     const initialLength = customer.servicesHistory.length;
     customer.servicesHistory = customer.servicesHistory.filter(
       (s) => s._id.toString() !== req.params.serviceId
@@ -150,6 +184,12 @@ const deleteCustomer = asyncHandler(async (req, res) => {
   const customer = await Customer.findById(req.params.id);
 
   if (customer) {
+    // Verify ownership
+    if (customer.userId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to delete this customer');
+    }
+    
     await Customer.deleteOne({ _id: customer._id });
     res.json({ message: 'Customer removed' });
   } else {
@@ -162,7 +202,7 @@ const deleteCustomer = asyncHandler(async (req, res) => {
 // @route   GET /api/customers/reminders
 // @access  Private
 const getReminders = asyncHandler(async (req, res) => {
-  const customers = await Customer.find({});
+  const customers = await Customer.find({ userId: req.user._id });
   const now = new Date();
 
   const followUps = [];
@@ -219,6 +259,12 @@ const updateLastContacted = asyncHandler(async (req, res) => {
   const customer = await Customer.findById(req.params.id);
 
   if (customer) {
+    // Verify ownership
+    if (customer.userId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to update this customer');
+    }
+    
     customer.lastContacted = Date.now();
     await customer.save();
     res.json({ message: 'Last contacted updated' });

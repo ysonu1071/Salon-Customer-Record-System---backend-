@@ -28,6 +28,22 @@ const appointmentSchema = mongoose.Schema(
     phone: {
       type: String,
     },
+    priceDiscussed: {
+      type: Number,
+      default: 0,
+    },
+    advanceTaken: {
+      type: Number,
+      default: 0,
+    },
+    appointmentType: {
+      type: String,
+      enum: ['salon', 'outside'],
+      default: 'salon',
+    },
+    location: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'completed', 'cancelled'],
