@@ -5,7 +5,7 @@ import Appointment from '../models/Appointment.js';
 // @route   POST /api/appointments
 // @access  Private
 const createAppointment = asyncHandler(async (req, res) => {
-  const { customerId, customerName, serviceType, service, date, time, phone } = req.body;
+  const { customerId, customerName, serviceType, service, date, time, phone, priceDiscussed, advanceTaken, appointmentType, location } = req.body;
 
   const appointment = await Appointment.create({
     user: req.user._id,
@@ -16,6 +16,10 @@ const createAppointment = asyncHandler(async (req, res) => {
     date,
     time,
     phone,
+    priceDiscussed: priceDiscussed || 0,
+    advanceTaken: advanceTaken || 0,
+    appointmentType: appointmentType || 'salon',
+    location,
   });
 
   if (appointment) {
@@ -47,6 +51,11 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
     }
 
     appointment.status = req.body.status || appointment.status;
+    appointment.priceDiscussed = req.body.priceDiscussed !== undefined ? req.body.priceDiscussed : appointment.priceDiscussed;
+    appointment.advanceTaken = req.body.advanceTaken !== undefined ? req.body.advanceTaken : appointment.advanceTaken;
+    appointment.appointmentType = req.body.appointmentType || appointment.appointmentType;
+    appointment.location = req.body.location !== undefined ? req.body.location : appointment.location;
+    
     const updatedAppointment = await appointment.save();
     res.json(updatedAppointment);
   } else {
